@@ -6,6 +6,7 @@ package prometheusreceiver // import "github.com/open-telemetry/opentelemetry-co
 import (
 	"errors"
 	"fmt"
+	"log/slog"
 	"os"
 	"sort"
 	"strings"
@@ -69,7 +70,20 @@ func (cfg *PromConfig) Unmarshal(componentParser *confmap.Conf) error {
 	if len(cfgMap) == 0 {
 		return nil
 	}
-	return unmarshalYAML(cfgMap, (*promconfig.Config)(cfg))
+
+	yamlOut, err := yaml.Marshal(cfgMap)
+	if err != nil {
+		return fmt.Errorf("prometheus receiver: failed to marshal config to yaml: %w", err)
+	}
+
+	tmp, err := promconfig.Load(string(yamlOut), slog.Default())
+	if err != nil {
+		return fmt.Errorf("prometheus receiver: failed to unmarshal yaml to prometheus config object: %w", err)
+	}
+
+	*cfg = PromConfig(*tmp)
+
+	return err
 }
 
 func (cfg *PromConfig) Validate() error {
@@ -125,19 +139,6 @@ func (cfg *PromConfig) Validate() error {
 				}
 			}
 		}
-	}
-	return nil
-}
-
-func unmarshalYAML(in map[string]any, out any) error {
-	yamlOut, err := yaml.Marshal(in)
-	if err != nil {
-		return fmt.Errorf("prometheus receiver: failed to marshal config to yaml: %w", err)
-	}
-
-	err = yaml.UnmarshalStrict(yamlOut, out)
-	if err != nil {
-		return fmt.Errorf("prometheus receiver: failed to unmarshal yaml to prometheus config object: %w", err)
 	}
 	return nil
 }
