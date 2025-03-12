@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/prometheus/common/model"
+	promconfig "github.com/prometheus/prometheus/config"
 	"github.com/prometheus/prometheus/model/exemplar"
 	"github.com/prometheus/prometheus/model/histogram"
 	"github.com/prometheus/prometheus/model/labels"
@@ -46,12 +47,14 @@ var (
 		labels.FromMap(map[string]string{
 			model.InstanceLabel: "localhost:8080",
 		}),
+		&promconfig.ScrapeConfig{},
 		// discoveredLabels contain labels prior to any processing
-		labels.FromMap(map[string]string{
+		model.LabelSet{
 			model.AddressLabel: "address:8080",
 			model.SchemeLabel:  "http",
-		}),
-		nil)
+		},
+		nil,
+	)
 
 	scrapeCtx = scrape.ContextWithMetricMetadataStore(
 		scrape.ContextWithTarget(context.Background(), target),
@@ -459,12 +462,14 @@ func testTransactionAppendWithEmptyLabelArrayFallbackToTargetLabels(t *testing.T
 			model.InstanceLabel: "localhost:8080",
 			model.JobLabel:      "federate",
 		}),
+		&promconfig.ScrapeConfig{},
 		// discoveredLabels contain labels prior to any processing
-		labels.FromMap(map[string]string{
+		model.LabelSet{
 			model.AddressLabel: "address:8080",
 			model.SchemeLabel:  "http",
-		}),
-		nil)
+		},
+		nil,
+	)
 
 	ctx := scrape.ContextWithMetricMetadataStore(
 		scrape.ContextWithTarget(context.Background(), scrapeTarget),
